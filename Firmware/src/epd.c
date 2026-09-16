@@ -123,8 +123,10 @@ _attribute_ram_code_ uint8_t EPD_read_temp(void)
         epd_temperature = EPD_BWR_213_read_temp();
 //    else if (epd_model == 3)
 //        epd_temperature = EPD_BWR_154_read_temp();
-    else if (epd_model == 4 || epd_model == 5)
+    else if (epd_model == 4)
         epd_temperature = EPD_BW_213_ice_read_temp();
+    else if (epd_model == 5)
+        epd_temperature = EPD_BWR_296_read_temp();
 
     EPD_POWER_OFF();
 
@@ -175,8 +177,10 @@ _attribute_ram_code_ void epd_set_sleep(void)
         EPD_BWR_213_set_sleep();
 //    else if (epd_model == 3)
 //        EPD_BWR_154_set_sleep();
-    else if (epd_model == 4 || epd_model == 5)
+    else if (epd_model == 4)
         EPD_BW_213_ice_set_sleep();
+    else if (epd_model == 5)
+        EPD_BWR_296_set_sleep();
 
     EPD_POWER_OFF();
     epd_update_state = 0;
@@ -352,10 +356,8 @@ void update_time_scene(struct date_time _time, uint16_t battery_mv, int16_t temp
     else if (_time.tm_min != minute_refresh)
     {
         minute_refresh = _time.tm_min;
-        if (_time.tm_min % 10 == 0) // Update every 10 minutes
-        {
-            scene(_time, battery_mv, temperature, 1);
-        }
+        // Refresh the clock every minute; periodically use a full refresh to clear ghosting.
+        scene(_time, battery_mv, temperature, _time.tm_min % 10 == 0);
     }
 }
 
@@ -384,15 +386,10 @@ void epd_display_time_with_date(struct date_time _time, uint16_t battery_mv, int
     battery_level = get_battery_level(battery_mv);
 
     sprintf(buff, "S24_%02X%02X%02X", mac_public[2], mac_public[1], mac_public[0]);
-    obdWriteStringCustom(&obd, (GFXfont *)&Dialog_plain_16, 46, 17, (char *)buff, 1);
+    obdWriteStringCustom(&obd, (GFXfont *)&Dialog_plain_16, 8, 18, (char *)buff, 1);
 
-    if (ble_get_connected()) {
-        sprintf(buff, "78%s", "234");
-    } else {
-        sprintf(buff, "78%s", "56");
-    }
-
-    obdWriteStringCustom(&obd, (GFXfont *)&Dialog_plain_16_zh, 140, 21, (char *)buff, 1);
+    sprintf(buff, "%s", BLE_conn_string[ble_get_connected()]);
+    obdWriteStringCustom(&obd, (GFXfont *)&Dialog_plain_16, 170, 18, (char *)buff, 1);
 
     obdRectangle(&obd, 252, 10, 255, 14, 1, 1);
     obdRectangle(&obd, 255, 2, 295, 22, 1, 1);

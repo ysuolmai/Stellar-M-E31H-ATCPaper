@@ -4,10 +4,12 @@ ifeq ($(OS), Windows_NT)
 	TC32_COMPILER_PATH := "tc32_windows\\bin\\"
 	WINDOWS_PREFIX :=$(TC32_COMPILER_PATH)
 	LINUX_CHMOD := 
+	PYTHON ?= python
 else
 	TC32_COMPILER_PATH := ./tc32_linux/bin/
 	WINDOWS_PREFIX :=
 	LINUX_CHMOD := chmod 777 -R ./tc32_linux/
+	PYTHON ?= python3
 endif
 
 LIBS :=  -llt_8258
@@ -55,6 +57,10 @@ INCLUDE_PATHS := -I$(TEL_PATH)/components -I$(PROJECT_PATH)
 
 GCC_FLAGS += $(TEL_CHIP)
 
+ifeq ($(PROFILE),lipo)
+GCC_FLAGS += -DBATTERY_PROFILE_LIPO=1 -DBATTERY_SOURCE_VCC=1
+endif
+
 LS_FLAGS := $(PROJECT_PATH_STATIC)/boot.link
 
 #include SDK makefile
@@ -100,7 +106,7 @@ $(LST_FILE): $(ELF_FILE)
 $(BIN_FILE): $(ELF_FILE)
 	@echo 'Create Flash image (binary format)'
 	@$(TC32_COMPILER_PATH)tc32-elf-objcopy -v -O binary $(ELF_FILE)  $(BIN_FILE)
-	@python $(TEL_PATH)/make/tl_firmware_tools.py add_crc $(BIN_FILE)
+	@$(PYTHON) $(TEL_PATH)/make/tl_firmware_tools.py add_crc $(BIN_FILE)
 	@echo 'Finished building: $@'
 	@echo ' '
 
@@ -125,4 +131,4 @@ chmod_all:
 secondary-outputs: $(BIN_FILE) $(LST_FILE) sizedummy
 
 .PHONY: all clean
-.SECONDARY: main-build 
+.SECONDARY: main-build

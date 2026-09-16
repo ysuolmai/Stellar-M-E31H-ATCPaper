@@ -1,0 +1,50 @@
+name: Build firmware
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  TOOLCHAIN_REPOSITORY: https://github.com/atc1441/ATC_TLSR_Paper.git
+  TOOLCHAIN_REF: 3778d296f418c30b05310d86dafa4e3404071cb4
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fetch TC32 toolchain
+        run: |
+          git clone --filter=blob:none --no-checkout "$TOOLCHAIN_REPOSITORY" /tmp/atc-paper
+          git -C /tmp/atc-paper sparse-checkout init --cone
+          git -C /tmp/atc-paper sparse-checkout set Firmware/tc32_linux
+          git -C /tmp/atc-paper checkout "$TOOLCHAIN_REF"
+          cp -a /tmp/atc-paper/Firmware/tc32_linux Firmware/tc32_linux
+          chmod +x Firmware/tc32_linux/bin/*
+
+      - name: Build standard and LiPo firmware
+        run: |
+          mkdir -p artifacts
+          make -C Firmware clean all
+          cp Firmware/ATC_Paper.bin artifacts/ATC_Paper-standard.bin
+          make -C Firmware clean all PROFILE=lipo
+          cp Firmware/ATC_Paper.bin artifacts/ATC_Paper-vcc-lipo.bin
+          sha256sum artifacts/*.bin > artifacts/SHA256SUMS
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: stellar-m-e31h-firmware
+          path: artifacts/
+
+      - name: Publish GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          files: artifacts/*

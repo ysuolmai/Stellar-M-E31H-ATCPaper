@@ -80,24 +80,34 @@ _attribute_ram_code_ uint16_t get_adc_reading(ADC_InputPchTypeDef p_ain, ADC_Inp
 
 _attribute_ram_code_ uint16_t get_battery_mv(void)
 {
-	/*gpio_set_output_en(GPIO_PB7, 1);
-	gpio_set_input_en(GPIO_PB7, 0);
-	gpio_write(GPIO_PB7, 1);
-	return get_adc_reading(B7P, GND);*/
-    adc_init();
+	adc_init();
 	adc_vbat_init(GPIO_PB7);
-    adc_power_on_sar_adc(1);
+
+#if BATTERY_SOURCE_VCC
+	// The TLSR8258 exposes its supply rail as the internal VBAT ADC channel.
+	adc_set_ain_channel_differential_mode(ADC_MISC_CHN, VBAT, GND);
+#endif
+
+	adc_power_on_sar_adc(1);
 	return adc_sample_and_get_result();
 }
 
 _attribute_ram_code_ uint8_t get_battery_level(uint16_t battery_mv)
 {
-	uint8_t battery_level = (battery_mv - 2200) / (31 - 22);
-	if (battery_level > 100)
-		battery_level = 100;
-	if (battery_mv < 2200)
-		battery_level = 0;
-	return battery_level;
+#if BATTERY_PROFILE_LIPO
+	const uint16_t empty_mv = 3200;
+	const uint16_t full_mv = 4200;
+#else
+	const uint16_t empty_mv = 2200;
+	const uint16_t full_mv = 3100;
+#endif
+
+	if (battery_mv <= empty_mv)
+		return 0;
+	if (battery_mv >= full_mv)
+		return 100;
+
+	return (uint32_t)(battery_mv - empty_mv) * 100 / (full_mv - empty_mv);
 }
 
 _attribute_ram_code_ void adc_temp_init(void)

@@ -1,1 +1,1 @@
-这个文件夹内的文件适配锂电池改装款价签，使用时删掉本txt文件并用这个src文件夹内所有文件替换Stellar-L3N-Etag项目源代码firmware中的src中所有文件并运行makeit.exe编译
+此目录是旧版 VCC 显示源码，仅把界面改成显示 VCC，采样仍使用 PB7，不能正确显示接在 VCC 上的锂电池电量。新版本请直接使用 Firmware/src，并执行 `make -C Firmware clean all PROFILE=lipo` 编译 VCC LiPo 固件。
