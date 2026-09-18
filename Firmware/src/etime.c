@@ -42,8 +42,12 @@ _attribute_ram_code_ void handler_time(void)
         current_date.tm_sec = current_unix_time % 60;
 
         if (current_unix_time % 86400 == 0) {
-            current_date.tm_month = current_date.tm_month % 12;
-            if (current_date.tm_day + 1 > map[current_date.tm_month - 1]) {
+            uint8_t month_days = map[current_date.tm_month - 1];
+            if (current_date.tm_month == 2 &&
+                ((current_date.tm_year % 4 == 0 && current_date.tm_year % 100 != 0) || current_date.tm_year % 400 == 0))
+                month_days = 29;
+
+            if (current_date.tm_day + 1 > month_days) {
                 current_date.tm_day = 1;
                 if (current_date.tm_month + 1 > 12) {
                     current_date.tm_month = 1;
@@ -55,7 +59,7 @@ _attribute_ram_code_ void handler_time(void)
                 current_date.tm_day = current_date.tm_day + 1;
             }
 
-            current_date.tm_week = (current_date.tm_week + 1) % 7;
+            current_date.tm_week = current_date.tm_week % 7 + 1;
         }
     }
 }
