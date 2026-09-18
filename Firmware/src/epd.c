@@ -378,9 +378,9 @@ static void draw_clock_digit(int x, int y, uint8_t digit) {
     static const uint8_t segments[] = {
         0x3f, 0x06, 0x5b, 0x4f, 0x66, 0x6d, 0x7d, 0x07, 0x7f, 0x6f
     };
-    const int width = 52;
-    const int height = 86;
-    const int thickness = 7;
+    const int width = 47;
+    const int height = 76;
+    const int thickness = 6;
     const int middle = y + height / 2;
     uint8_t mask = segments[digit];
 
@@ -394,12 +394,12 @@ static void draw_clock_digit(int x, int y, uint8_t digit) {
 }
 
 static void draw_clock_time(uint8_t hour, uint8_t minute) {
-    draw_clock_digit(3, 8, hour / 10);
-    draw_clock_digit(58, 8, hour % 10);
-    obdRectangle(&obd, 114, 31, 120, 38, 1, 1);
-    obdRectangle(&obd, 114, 64, 120, 71, 1, 1);
-    draw_clock_digit(125, 8, minute / 10);
-    draw_clock_digit(180, 8, minute % 10);
+    draw_clock_digit(8, 12, hour / 10);
+    draw_clock_digit(59, 12, hour % 10);
+    obdRectangle(&obd, 112, 34, 118, 40, 1, 1);
+    obdRectangle(&obd, 112, 61, 118, 67, 1, 1);
+    draw_clock_digit(125, 12, minute / 10);
+    draw_clock_digit(176, 12, minute % 10);
 }
 
 void epd_display_time_with_date(struct date_time _time, uint16_t battery_mv, int16_t temperature, uint8_t full_or_partial) {
@@ -418,33 +418,33 @@ void epd_display_time_with_date(struct date_time _time, uint16_t battery_mv, int
     draw_clock_time(_time.tm_hour, _time.tm_min);
 
     sprintf(buff, "%d'C", EPD_read_temp());
-    obdWriteStringCustom(&obd, (GFXfont *)&Dialog_plain_16, 246, 38, (char *)buff, 1);
+    obdWriteStringCustom(&obd, (GFXfont *)&Dialog_plain_16, 242, 38, (char *)buff, 1);
 
-    obdRectangle(&obd, 240, 51, 295, 51, 1, 1);
+    obdRectangle(&obd, 231, 51, 295, 51, 1, 1);
 
     sprintf(buff, "%d.%dV", battery_decivolts / 10, battery_decivolts % 10);
-    obdWriteStringCustom(&obd, (GFXfont *)&Dialog_plain_16, 247, 77, (char *)buff, 1);
+    obdWriteStringCustom(&obd, (GFXfont *)&Dialog_plain_16, 244, 77, (char *)buff, 1);
 
-    obdRectangle(&obd, 239, 0, 239, 101, 1, 1);
+    obdRectangle(&obd, 230, 0, 230, 101, 1, 1);
     obdRectangle(&obd, 0, 101, 295, 101, 1, 1);
 
     sprintf(buff, "%d-%02d-%02d", _time.tm_year, _time.tm_month, _time.tm_day);
-    obdWriteStringCustom(&obd, (GFXfont *)&Dialog_plain_16, 5, 123, (char *)buff, 1);
+    obdWriteStringCustom(&obd, (GFXfont *)&Dialog_plain_16, 10, 120, (char *)buff, 1);
 
     if (_time.tm_week == 7) {
         sprintf(buff, "9:%c", _time.tm_week + 0x20 + 6);
     } else {
         sprintf(buff, "9:%c", _time.tm_week + 0x20);
     }
-    obdWriteStringCustom(&obd, (GFXfont *)&Dialog_plain_16_zh, 125, 123, (char *)buff, 1);
+    obdWriteStringCustom(&obd, (GFXfont *)&Dialog_plain_16_zh, 135, 120, (char *)buff, 1);
 
     if (ble_get_connected())
-        obdWriteStringCustom(&obd, (GFXfont *)&Dialog_plain_16, 190, 123, "BLE", 1);
+        obdWriteStringCustom(&obd, (GFXfont *)&Dialog_plain_16, 198, 120, "BLE", 1);
 
-    obdRectangle(&obd, 246, 110, 249, 115, 1, 1);
-    obdRectangle(&obd, 249, 104, 295, 126, 1, 1);
+    obdRectangle(&obd, 248, 111, 251, 117, 1, 1);
+    obdRectangle(&obd, 251, 105, 292, 124, 1, 1);
     sprintf(buff, "%d", battery_level);
-    obdWriteStringCustom(&obd, (GFXfont *)&Dialog_plain_16, 255, 123, (char *)buff, 0);
+    obdWriteStringCustom(&obd, (GFXfont *)&Dialog_plain_16, 256, 120, (char *)buff, 0);
 
     FixBuffer(epd_temp, epd_buffer, epd_width, epd_height);
 
