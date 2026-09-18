@@ -374,6 +374,34 @@ void epd_update(struct date_time _time, uint16_t battery_mv, int16_t temperature
     }
 }
 
+static void draw_clock_digit(int x, int y, uint8_t digit) {
+    static const uint8_t segments[] = {
+        0x3f, 0x06, 0x5b, 0x4f, 0x66, 0x6d, 0x7d, 0x07, 0x7f, 0x6f
+    };
+    const int width = 44;
+    const int height = 86;
+    const int thickness = 7;
+    const int middle = y + height / 2;
+    uint8_t mask = segments[digit];
+
+    if (mask & 0x01) obdRectangle(&obd, x + thickness, y, x + width - thickness - 1, y + thickness - 1, 1, 1);
+    if (mask & 0x02) obdRectangle(&obd, x + width - thickness, y + thickness, x + width - 1, middle - 1, 1, 1);
+    if (mask & 0x04) obdRectangle(&obd, x + width - thickness, middle, x + width - 1, y + height - thickness - 1, 1, 1);
+    if (mask & 0x08) obdRectangle(&obd, x + thickness, y + height - thickness, x + width - thickness - 1, y + height - 1, 1, 1);
+    if (mask & 0x10) obdRectangle(&obd, x, middle, x + thickness - 1, y + height - thickness - 1, 1, 1);
+    if (mask & 0x20) obdRectangle(&obd, x, y + thickness, x + thickness - 1, middle - 1, 1, 1);
+    if (mask & 0x40) obdRectangle(&obd, x + thickness, middle - thickness / 2, x + width - thickness - 1, middle + thickness / 2, 1, 1);
+}
+
+static void draw_clock_time(uint8_t hour, uint8_t minute) {
+    draw_clock_digit(5, 8, hour / 10);
+    draw_clock_digit(54, 8, hour % 10);
+    obdRectangle(&obd, 105, 31, 111, 38, 1, 1);
+    obdRectangle(&obd, 105, 64, 111, 71, 1, 1);
+    draw_clock_digit(118, 8, minute / 10);
+    draw_clock_digit(167, 8, minute % 10);
+}
+
 void epd_display_time_with_date(struct date_time _time, uint16_t battery_mv, int16_t temperature, uint8_t full_or_partial) {
     uint16_t battery_level;
 
@@ -385,50 +413,36 @@ void epd_display_time_with_date(struct date_time _time, uint16_t battery_mv, int
     char buff[100];
     battery_level = get_battery_level(battery_mv);
 
-    sprintf(buff, "S24_%02X%02X%02X", mac_public[2], mac_public[1], mac_public[0]);
-    obdWriteStringCustom(&obd, (GFXfont *)&Dialog_plain_16, 8, 18, (char *)buff, 1);
+    draw_clock_time(_time.tm_hour, _time.tm_min);
 
-    if (ble_get_connected())
-        obdWriteStringCustom(&obd, (GFXfont *)&Dialog_plain_16, 170, 18, "BLE", 1);
+    sprintf(buff, "%d'C", EPD_read_temp());
+    obdWriteStringCustom(&obd, (GFXfont *)&Dialog_plain_16, 228, 38, (char *)buff, 1);
 
-    obdRectangle(&obd, 252, 10, 255, 14, 1, 1);
-    obdRectangle(&obd, 255, 2, 295, 22, 1, 1);
+    obdRectangle(&obd, 217, 51, 295, 51, 1, 1);
 
-    sprintf(buff, "%d", battery_level);
-    obdWriteStringCustom(&obd, (GFXfont *)&Dialog_plain_16, 259, 18, (char *)buff, 0);
+    sprintf(buff, "%dmV", battery_mv);
+    obdWriteStringCustom(&obd, (GFXfont *)&Dialog_plain_16, 222, 77, (char *)buff, 1);
 
-    obdRectangle(&obd, 0, 25, 295, 27, 1, 1);
-
-    sprintf(buff, "%02d:%02d", _time.tm_hour, _time.tm_min);
-    obdWriteStringCustom(&obd, (GFXfont *)&DSEG14_Classic_Mini_Regular_40, 55, 85, (char *)buff, 1);
-
-    sprintf(buff, "   %d'C", EPD_read_temp());
-    obdWriteStringCustom(&obd, (GFXfont *)&Dialog_plain_16, 215, 50, (char *)buff, 1);
-
-    obdRectangle(&obd, 216, 60, 295, 62, 1, 1);
-
-    sprintf(buff, " %dmV", battery_mv);
-    obdWriteStringCustom(&obd, (GFXfont *)&Dialog_plain_16, 215, 84, (char *)buff, 1);
-
-    obdRectangle(&obd, 214, 27, 216, 99, 1, 1);
-    obdRectangle(&obd, 46, 97, 295, 99, 1, 1);
+    obdRectangle(&obd, 216, 0, 216, 101, 1, 1);
+    obdRectangle(&obd, 0, 101, 295, 101, 1, 1);
 
     sprintf(buff, "%d-%02d-%02d", _time.tm_year, _time.tm_month, _time.tm_day);
-    obdWriteStringCustom(&obd, (GFXfont *)&Dialog_plain_16, 46, 120, (char *)buff, 1);
+    obdWriteStringCustom(&obd, (GFXfont *)&Dialog_plain_16, 5, 123, (char *)buff, 1);
 
     if (_time.tm_week == 7) {
         sprintf(buff, "9:%c", _time.tm_week + 0x20 + 6);
     } else {
         sprintf(buff, "9:%c", _time.tm_week + 0x20);
     }
-    obdWriteStringCustom(&obd, (GFXfont *)&Dialog_plain_16_zh, 142, 122, (char *)buff, 1);
+    obdWriteStringCustom(&obd, (GFXfont *)&Dialog_plain_16_zh, 125, 123, (char *)buff, 1);
 
-    if (_time.tm_hour > 7 && _time.tm_hour < 20) {
-        sprintf(buff, "%s", "EFGH");
-    } else {
-        sprintf(buff, "%s", "ABCD");
-    }
-    obdWriteStringCustom(&obd, (GFXfont *)&Dialog_plain_16_zh, 205, 122, (char *)buff, 1);
+    if (ble_get_connected())
+        obdWriteStringCustom(&obd, (GFXfont *)&Dialog_plain_16, 190, 123, "BLE", 1);
+
+    obdRectangle(&obd, 246, 110, 249, 115, 1, 1);
+    obdRectangle(&obd, 249, 104, 295, 126, 1, 1);
+    sprintf(buff, "%d", battery_level);
+    obdWriteStringCustom(&obd, (GFXfont *)&Dialog_plain_16, 255, 123, (char *)buff, 0);
 
     FixBuffer(epd_temp, epd_buffer, epd_width, epd_height);
 
