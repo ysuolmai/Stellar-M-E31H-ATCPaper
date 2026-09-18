@@ -62,10 +62,11 @@ uint8_t calendar_get(uint16_t year, uint8_t month, uint8_t day, calendar_date_t 
     }
 
     term = (month - 1) * 2;
-    if (day > calendar_solar_term_days[year - CALENDAR_MIN_YEAR][term])
-        term++;
-    if (day > calendar_solar_term_days[year - CALENDAR_MIN_YEAR][term])
-        term++;
-    date->solar_term = term % 24;
+    if (day == calendar_solar_term_days[year - CALENDAR_MIN_YEAR][term])
+        date->solar_term = term;
+    else if (day == calendar_solar_term_days[year - CALENDAR_MIN_YEAR][term + 1])
+        date->solar_term = term + 1;
+    else
+        date->solar_term = CALENDAR_NO_SOLAR_TERM;
     return 1;
 }

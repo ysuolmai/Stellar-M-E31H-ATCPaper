@@ -2,6 +2,8 @@
 
 #include <stdint.h>
 
+#define CALENDAR_NO_SOLAR_TERM 0xff
+
 typedef struct {
     uint16_t year;
     uint8_t month;

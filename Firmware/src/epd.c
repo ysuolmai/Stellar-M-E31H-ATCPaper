@@ -36,8 +36,6 @@ RAM uint8_t epd_temperature = 0;
 
 uint8_t epd_buffer[epd_buffer_size];
 uint8_t epd_temp[epd_buffer_size]; // for OneBitDisplay to draw into
-RAM uint8_t epd_previous[epd_buffer_size];
-RAM uint8_t epd_previous_valid = 0;
 OBDISP obd;                        // virtual display structure
 TIFFIMAGE tiff;
 
@@ -158,14 +156,8 @@ _attribute_ram_code_ void EPD_Display(unsigned char *image, unsigned char *red_i
 //        epd_temperature = EPD_BWR_154_Display(image, size, full_or_partial);
     else if (epd_model == 4)
         epd_temperature = EPD_BW_213_ice_Display(image, size, full_or_partial);
-    else if (epd_model == 5) {
-        uint8_t use_full_refresh = full_or_partial || !epd_previous_valid;
-        epd_temperature = EPD_BWR_296_Display_BWR(image, red_image,
-                                                   use_full_refresh ? NULL : epd_previous,
-                                                   size, use_full_refresh);
-        memcpy(epd_previous, image, size);
-        epd_previous_valid = 1;
-    }
+    else if (epd_model == 5)
+        epd_temperature = EPD_BWR_296_Display_BWR(image, red_image, size, full_or_partial);
 
     epd_temperature_is_read = 1;
     epd_update_state = 1;
@@ -359,10 +351,9 @@ void update_time_scene(struct date_time _time, uint16_t battery_mv, int16_t temp
 
     else if (_time.tm_min != minute_refresh)
     {
-        uint8_t full_refresh = minute_refresh == 100 || _time.tm_min % 10 == 0;
         minute_refresh = _time.tm_min;
-        // The first frame must be full; partial updates require a known panel image.
-        scene(_time, battery_mv, temperature, full_refresh);
+        // ponytail: this panel's partial waveform corrupts changing seven-segment digits.
+        scene(_time, battery_mv, temperature, 1);
     }
 }
 
@@ -518,12 +509,12 @@ void epd_display_time_with_date(struct date_time _time, uint16_t battery_mv, int
     x = draw_calendar_glyph(x, 7, GLYPH_PERIOD);
     draw_calendar_glyph(x, 7, (_time.tm_week == 0 || _time.tm_week == 7) ? GLYPH_SUN : GLYPH_ONE + _time.tm_week - 1);
 
-    obdRectangle(&obd, 247, 7, 250, 12, 1, 1);
-    obdRectangle(&obd, 251, 2, 292, 18, 1, 0);
+    obdRectangle(&obd, 247, 12, 250, 17, 1, 1);
+    obdRectangle(&obd, 251, 7, 292, 23, 1, 0);
     sprintf(buff, "%d", battery_level);
     draw_bold_text((GFXfont *)&Dialog_plain_16,
                    battery_level >= 100 ? 256 : (battery_level >= 10 ? 261 : 267),
-                   16, buff, 1);
+                   21, buff, 1);
 
     if (calendar_get(_time.tm_year, _time.tm_month, _time.tm_day, &date)) {
         static const uint8_t branches[] = {
@@ -539,7 +530,8 @@ void epd_display_time_with_date(struct date_time _time, uint16_t battery_mv, int
         draw_calendar_glyph(61, 104, branches[zodiac]);
         draw_calendar_glyph(77, 104, animals[zodiac]);
         draw_lunar_date(date.is_leap_month ? 99 : 107, 104, &date);
-        draw_solar_term(185, 104, date.solar_term);
+        if (date.solar_term != CALENDAR_NO_SOLAR_TERM)
+            draw_solar_term(185, 104, date.solar_term);
         display_temperature = temperature;
         sprintf(buff, "%d'C", display_temperature);
         obdGetStringBox((GFXfont *)&Dialog_plain_16, buff, &text_width, &text_top, &text_bottom);
