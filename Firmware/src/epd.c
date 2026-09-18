@@ -407,11 +407,19 @@ static int draw_calendar_glyph(int x, int y, uint8_t glyph)
 
     for (row = 0; row < 16; row++) {
         for (column = 0; column < 16; column++) {
-            if (calendar_glyphs[glyph][row * 2 + column / 8] & (0x80 >> (column & 7)))
+            if (calendar_glyphs[glyph][row * 2 + column / 8] & (0x80 >> (column & 7))) {
                 obdSetPixel(&obd, x + column, y + row, 1, 0);
+                obdSetPixel(&obd, x + column + 1, y + row, 1, 0);
+            }
         }
     }
     return x + 16;
+}
+
+static void draw_bold_text(GFXfont *font, int x, int y, char *text, uint8_t color)
+{
+    obdWriteStringCustom(&obd, font, x, y, text, color);
+    obdWriteStringCustom(&obd, font, x + 1, y, text, color);
 }
 
 static int draw_lunar_date(int x, int y, const calendar_date_t *date)
@@ -498,17 +506,17 @@ void epd_display_time_with_date(struct date_time _time, uint16_t battery_mv, int
     draw_clock_time(_time.tm_hour, _time.tm_min);
 
     sprintf(buff, "%d-%02d-%02d", _time.tm_year, _time.tm_month, _time.tm_day);
-    obdWriteStringCustom(&obd, (GFXfont *)&Dialog_plain_16, 49, 20, (char *)buff, 1);
-    x = draw_calendar_glyph(157, 7, GLYPH_WEEK);
+    draw_bold_text((GFXfont *)&Dialog_plain_16, 49, 20, buff, 1);
+    x = draw_calendar_glyph(178, 7, GLYPH_WEEK);
     x = draw_calendar_glyph(x, 7, GLYPH_PERIOD);
     draw_calendar_glyph(x, 7, (_time.tm_week == 0 || _time.tm_week == 7) ? GLYPH_SUN : GLYPH_ONE + _time.tm_week - 1);
 
     obdRectangle(&obd, 247, 7, 250, 12, 1, 1);
     obdRectangle(&obd, 251, 2, 292, 18, 1, 0);
     sprintf(buff, "%d", battery_level);
-    obdWriteStringCustom(&obd, (GFXfont *)&Dialog_plain_16,
-                         battery_level >= 100 ? 257 : (battery_level >= 10 ? 262 : 268),
-                         16, (char *)buff, 1);
+    draw_bold_text((GFXfont *)&Dialog_plain_16,
+                   battery_level >= 100 ? 256 : (battery_level >= 10 ? 261 : 267),
+                   16, buff, 1);
 
     if (calendar_get(_time.tm_year, _time.tm_month, _time.tm_day, &date)) {
         static const uint8_t branches[] = {
@@ -521,14 +529,14 @@ void epd_display_time_with_date(struct date_time _time, uint16_t battery_mv, int
         };
         uint8_t zodiac = (date.year - 4) % 12;
 
-        draw_calendar_glyph(49, 104, branches[zodiac]);
-        draw_calendar_glyph(65, 104, animals[zodiac]);
-        draw_lunar_date(105, 104, &date);
-        draw_solar_term(191, 104, date.solar_term);
+        draw_calendar_glyph(61, 104, branches[zodiac]);
+        draw_calendar_glyph(77, 104, animals[zodiac]);
+        draw_lunar_date(date.is_leap_month ? 99 : 107, 104, &date);
+        draw_solar_term(185, 104, date.solar_term);
         display_temperature = temperature;
         sprintf(buff, "%d'C", display_temperature);
         obdGetStringBox((GFXfont *)&Dialog_plain_16, buff, &text_width, &text_top, &text_bottom);
-        obdWriteStringCustom(&obd, (GFXfont *)&Dialog_plain_16, 294 - text_width, 119, (char *)buff, 1);
+        draw_bold_text((GFXfont *)&Dialog_plain_16, 264 - (text_width + 1) / 2, 119, buff, 1);
     }
 
     FixBuffer(epd_temp, epd_buffer, epd_width, epd_height);
