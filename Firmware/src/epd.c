@@ -378,7 +378,7 @@ static void draw_clock_digit(int x, int y, uint8_t digit) {
     static const uint8_t segments[] = {
         0x3f, 0x06, 0x5b, 0x4f, 0x66, 0x6d, 0x7d, 0x07, 0x7f, 0x6f
     };
-    const int width = 44;
+    const int width = 52;
     const int height = 86;
     const int thickness = 7;
     const int middle = y + height / 2;
@@ -394,16 +394,17 @@ static void draw_clock_digit(int x, int y, uint8_t digit) {
 }
 
 static void draw_clock_time(uint8_t hour, uint8_t minute) {
-    draw_clock_digit(5, 8, hour / 10);
-    draw_clock_digit(54, 8, hour % 10);
-    obdRectangle(&obd, 105, 31, 111, 38, 1, 1);
-    obdRectangle(&obd, 105, 64, 111, 71, 1, 1);
-    draw_clock_digit(118, 8, minute / 10);
-    draw_clock_digit(167, 8, minute % 10);
+    draw_clock_digit(3, 8, hour / 10);
+    draw_clock_digit(58, 8, hour % 10);
+    obdRectangle(&obd, 114, 31, 120, 38, 1, 1);
+    obdRectangle(&obd, 114, 64, 120, 71, 1, 1);
+    draw_clock_digit(125, 8, minute / 10);
+    draw_clock_digit(180, 8, minute % 10);
 }
 
 void epd_display_time_with_date(struct date_time _time, uint16_t battery_mv, int16_t temperature, uint8_t full_or_partial) {
     uint16_t battery_level;
+    uint16_t battery_decivolts;
 
     epd_clear();
 
@@ -412,18 +413,19 @@ void epd_display_time_with_date(struct date_time _time, uint16_t battery_mv, int
 
     char buff[100];
     battery_level = get_battery_level(battery_mv);
+    battery_decivolts = (battery_mv + 50) / 100;
 
     draw_clock_time(_time.tm_hour, _time.tm_min);
 
     sprintf(buff, "%d'C", EPD_read_temp());
-    obdWriteStringCustom(&obd, (GFXfont *)&Dialog_plain_16, 228, 38, (char *)buff, 1);
+    obdWriteStringCustom(&obd, (GFXfont *)&Dialog_plain_16, 246, 38, (char *)buff, 1);
 
-    obdRectangle(&obd, 217, 51, 295, 51, 1, 1);
+    obdRectangle(&obd, 240, 51, 295, 51, 1, 1);
 
-    sprintf(buff, "%dmV", battery_mv);
-    obdWriteStringCustom(&obd, (GFXfont *)&Dialog_plain_16, 222, 77, (char *)buff, 1);
+    sprintf(buff, "%d.%dV", battery_decivolts / 10, battery_decivolts % 10);
+    obdWriteStringCustom(&obd, (GFXfont *)&Dialog_plain_16, 247, 77, (char *)buff, 1);
 
-    obdRectangle(&obd, 216, 0, 216, 101, 1, 1);
+    obdRectangle(&obd, 239, 0, 239, 101, 1, 1);
     obdRectangle(&obd, 0, 101, 295, 101, 1, 1);
 
     sprintf(buff, "%d-%02d-%02d", _time.tm_year, _time.tm_month, _time.tm_day);
