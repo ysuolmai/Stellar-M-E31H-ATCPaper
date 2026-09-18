@@ -34,8 +34,10 @@ RAM uint8_t minute_refresh = 100;
 RAM uint8_t epd_temperature_is_read = 0;
 RAM uint8_t epd_temperature = 0;
 
-RAM uint8_t epd_buffer[epd_buffer_size];
-RAM uint8_t epd_temp[epd_buffer_size]; // for OneBitDisplay to draw into
+uint8_t epd_buffer[epd_buffer_size];
+uint8_t epd_temp[epd_buffer_size]; // for OneBitDisplay to draw into
+RAM uint8_t epd_previous[epd_buffer_size];
+RAM uint8_t epd_previous_valid = 0;
 OBDISP obd;                        // virtual display structure
 TIFFIMAGE tiff;
 
@@ -156,9 +158,14 @@ _attribute_ram_code_ void EPD_Display(unsigned char *image, unsigned char *red_i
 //        epd_temperature = EPD_BWR_154_Display(image, size, full_or_partial);
     else if (epd_model == 4)
         epd_temperature = EPD_BW_213_ice_Display(image, size, full_or_partial);
-    else if (epd_model == 5)
-        epd_temperature = EPD_BWR_296_Display_BWR(image, red_image, size, full_or_partial);
-        //epd_temperature = EPD_BWR_296_Display(image, size, full_or_partial);
+    else if (epd_model == 5) {
+        uint8_t use_full_refresh = full_or_partial || !epd_previous_valid;
+        epd_temperature = EPD_BWR_296_Display_BWR(image, red_image,
+                                                   use_full_refresh ? NULL : epd_previous,
+                                                   size, use_full_refresh);
+        memcpy(epd_previous, image, size);
+        epd_previous_valid = 1;
+    }
 
     epd_temperature_is_read = 1;
     epd_update_state = 1;

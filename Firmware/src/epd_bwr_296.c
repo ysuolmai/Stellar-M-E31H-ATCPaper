@@ -138,7 +138,7 @@ _attribute_ram_code_ uint8_t EPD_BWR_296_read_temp(void)
     return epd_temperature;
 }
 
-_attribute_ram_code_ uint8_t EPD_BWR_296_Display(unsigned char *image, int size, uint8_t full_or_partial) {
+_attribute_ram_code_ uint8_t EPD_BWR_296_Display(unsigned char *image, unsigned char *old_image, int size, uint8_t full_or_partial) {
     uint8_t epd_temperature = 0 ;
 
     // SW Reset
@@ -231,11 +231,13 @@ _attribute_ram_code_ uint8_t EPD_BWR_296_Display(unsigned char *image, int size,
     EPD_WriteData(0x28);
     EPD_WriteData(0x01);
 
-    EPD_WriteCmd(0x26);
     int i;
-    for (i = 0; i < size; i++)
-    {
-        EPD_WriteData(0x00);
+    if (old_image)
+        EPD_LoadImage(old_image, size, 0x26);
+    else {
+        EPD_WriteCmd(0x26);
+        for (i = 0; i < size; i++)
+            EPD_WriteData(0x00);
     }
 
     if (!full_or_partial)
@@ -257,9 +259,9 @@ _attribute_ram_code_ uint8_t EPD_BWR_296_Display(unsigned char *image, int size,
     return epd_temperature;
 }
 
-_attribute_ram_code_ uint8_t EPD_BWR_296_Display_BWR(unsigned char *image, unsigned char *red_image, int size, uint8_t full_or_partial) {
+_attribute_ram_code_ uint8_t EPD_BWR_296_Display_BWR(unsigned char *image, unsigned char *red_image, unsigned char *old_image, int size, uint8_t full_or_partial) {
     if (red_image == NULL) {
-        return EPD_BWR_296_Display(image, size, full_or_partial);
+        return EPD_BWR_296_Display(image, old_image, size, full_or_partial);
     }
 
     uint8_t epd_temperature = 0 ;
