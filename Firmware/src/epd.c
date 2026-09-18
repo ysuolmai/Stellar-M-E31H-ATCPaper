@@ -388,8 +388,8 @@ void epd_display_time_with_date(struct date_time _time, uint16_t battery_mv, int
     sprintf(buff, "S24_%02X%02X%02X", mac_public[2], mac_public[1], mac_public[0]);
     obdWriteStringCustom(&obd, (GFXfont *)&Dialog_plain_16, 8, 18, (char *)buff, 1);
 
-    sprintf(buff, "%s", BLE_conn_string[ble_get_connected()]);
-    obdWriteStringCustom(&obd, (GFXfont *)&Dialog_plain_16, 170, 18, (char *)buff, 1);
+    if (ble_get_connected())
+        obdWriteStringCustom(&obd, (GFXfont *)&Dialog_plain_16, 170, 18, "BLE", 1);
 
     obdRectangle(&obd, 252, 10, 255, 14, 1, 1);
     obdRectangle(&obd, 255, 2, 295, 22, 1, 1);

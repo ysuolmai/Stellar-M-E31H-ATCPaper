@@ -12,10 +12,6 @@ extern "C" {
 #define BATTERY_PROFILE_LIPO 0
 #endif
 
-#ifndef BATTERY_SOURCE_VCC
-#define BATTERY_SOURCE_VCC 0
-#endif
-
 #define RAM _attribute_data_retention_ // short version, this is needed to keep the values in ram after sleep
 
 #include "application/print/u_printf.h"

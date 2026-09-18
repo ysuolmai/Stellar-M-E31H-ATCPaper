@@ -82,12 +82,6 @@ _attribute_ram_code_ uint16_t get_battery_mv(void)
 {
 	adc_init();
 	adc_vbat_init(GPIO_PB7);
-
-#if BATTERY_SOURCE_VCC
-	// The TLSR8258 exposes its supply rail as the internal VBAT ADC channel.
-	adc_set_ain_channel_differential_mode(ADC_MISC_CHN, VBAT, GND);
-#endif
-
 	adc_power_on_sar_adc(1);
 	return adc_sample_and_get_result();
 }
