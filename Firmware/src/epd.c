@@ -438,7 +438,6 @@ static void draw_battery_indicator(uint16_t level)
     };
     uint8_t digits[3];
     uint8_t digit_count;
-    uint8_t fill_width;
     uint8_t i;
     uint8_t row;
     uint8_t column;
@@ -461,19 +460,15 @@ static void draw_battery_indicator(uint16_t level)
         digit_count = 1;
     }
 
-    obdRectangle(&obd, 256, 13, 259, 17, 1, 1);
-    obdRectangle(&obd, 260, 9, 292, 21, 1, 0);
-
-    fill_width = (level * 28) / 100;
-    if (fill_width > 0)
-        obdRectangle(&obd, 262, 19, 261 + fill_width, 19, 1, 1);
+    obdRectangle(&obd, 256, 12, 259, 16, 1, 1);
+    obdRectangle(&obd, 260, 8, 292, 20, 1, 0);
 
     x = 276 - (digit_count * 6 - 1) / 2;
     for (i = 0; i < digit_count; i++) {
         for (column = 0; column < 5; column++) {
             for (row = 0; row < 7; row++) {
                 if (digit_glyphs[digits[i]][column] & (1 << row))
-                    obdSetPixel(&obd, x + i * 6 + column, 12 + row, 1, 0);
+                    obdSetPixel(&obd, x + i * 6 + column, 11 + row, 1, 0);
             }
         }
     }
