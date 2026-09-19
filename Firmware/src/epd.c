@@ -460,10 +460,17 @@ static void draw_battery_indicator(uint16_t level)
         digit_count = 1;
     }
 
-    obdRectangle(&obd, 256, 12, 259, 16, 1, 1);
-    obdRectangle(&obd, 260, 8, 292, 20, 1, 0);
+    obdRectangle(&obd, 260, 12, 263, 16, 1, 1);
+    obdRectangle(&obd, 266, 8, 289, 8, 1, 1);
+    obdRectangle(&obd, 266, 20, 289, 20, 1, 1);
+    obdRectangle(&obd, 264, 10, 264, 18, 1, 1);
+    obdRectangle(&obd, 291, 10, 291, 18, 1, 1);
+    obdSetPixel(&obd, 265, 9, 1, 0);
+    obdSetPixel(&obd, 290, 9, 1, 0);
+    obdSetPixel(&obd, 265, 19, 1, 0);
+    obdSetPixel(&obd, 290, 19, 1, 0);
 
-    x = 276 - (digit_count * 6 - 1) / 2;
+    x = 278 - (digit_count * 6 - 1) / 2;
     for (i = 0; i < digit_count; i++) {
         for (column = 0; column < 5; column++) {
             for (row = 0; row < 7; row++) {
