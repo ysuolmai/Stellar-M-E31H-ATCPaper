@@ -422,6 +422,63 @@ static void draw_bold_text(GFXfont *font, int x, int y, char *text, uint8_t colo
     obdWriteStringCustom(&obd, font, x + 1, y, text, color);
 }
 
+static void draw_battery_indicator(uint16_t level)
+{
+    static const uint8_t digit_glyphs[10][5] = {
+        {0x3e, 0x51, 0x49, 0x45, 0x3e},
+        {0x00, 0x42, 0x7f, 0x40, 0x00},
+        {0x42, 0x61, 0x51, 0x49, 0x46},
+        {0x21, 0x41, 0x45, 0x4b, 0x31},
+        {0x18, 0x14, 0x12, 0x7f, 0x10},
+        {0x27, 0x45, 0x45, 0x45, 0x39},
+        {0x3c, 0x4a, 0x49, 0x49, 0x30},
+        {0x01, 0x71, 0x09, 0x05, 0x03},
+        {0x36, 0x49, 0x49, 0x49, 0x36},
+        {0x06, 0x49, 0x49, 0x29, 0x1e}
+    };
+    uint8_t digits[3];
+    uint8_t digit_count;
+    uint8_t fill_width;
+    uint8_t i;
+    uint8_t row;
+    uint8_t column;
+    int x;
+
+    if (level > 100)
+        level = 100;
+
+    if (level == 100) {
+        digits[0] = 1;
+        digits[1] = 0;
+        digits[2] = 0;
+        digit_count = 3;
+    } else if (level >= 10) {
+        digits[0] = level / 10;
+        digits[1] = level % 10;
+        digit_count = 2;
+    } else {
+        digits[0] = level;
+        digit_count = 1;
+    }
+
+    obdRectangle(&obd, 256, 13, 259, 17, 1, 1);
+    obdRectangle(&obd, 260, 9, 292, 21, 1, 0);
+
+    fill_width = (level * 28) / 100;
+    if (fill_width > 0)
+        obdRectangle(&obd, 262, 19, 261 + fill_width, 19, 1, 1);
+
+    x = 276 - (digit_count * 6 - 1) / 2;
+    for (i = 0; i < digit_count; i++) {
+        for (column = 0; column < 5; column++) {
+            for (row = 0; row < 7; row++) {
+                if (digit_glyphs[digits[i]][column] & (1 << row))
+                    obdSetPixel(&obd, x + i * 6 + column, 12 + row, 1, 0);
+            }
+        }
+    }
+}
+
 static int draw_lunar_date(int x, int y, const calendar_date_t *date)
 {
     static const uint8_t numbers[] = {
@@ -511,12 +568,7 @@ void epd_display_time_with_date(struct date_time _time, uint16_t battery_mv, int
     x = draw_calendar_glyph(x, 7, GLYPH_PERIOD);
     draw_calendar_glyph(x, 7, (_time.tm_week == 0 || _time.tm_week == 7) ? GLYPH_SUN : GLYPH_ONE + _time.tm_week - 1);
 
-    obdRectangle(&obd, 247, 12, 250, 17, 1, 1);
-    obdRectangle(&obd, 251, 7, 292, 23, 1, 0);
-    sprintf(buff, "%d", battery_level);
-    draw_bold_text((GFXfont *)&Dialog_plain_16,
-                   battery_level >= 100 ? 256 : (battery_level >= 10 ? 261 : 267),
-                   21, buff, 1);
+    draw_battery_indicator(battery_level);
 
     if (calendar_get(_time.tm_year, _time.tm_month, _time.tm_day, &date)) {
         static const uint8_t branches[] = {
