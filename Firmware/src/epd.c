@@ -462,9 +462,13 @@ static void draw_battery_indicator(uint16_t level)
 
     obdRectangle(&obd, 265, 12, 266, 17, 1, 1);
     obdRectangle(&obd, 269, 7, 289, 7, 1, 1);
+    obdRectangle(&obd, 269, 8, 289, 8, 1, 1);
     obdRectangle(&obd, 269, 22, 289, 22, 1, 1);
+    obdRectangle(&obd, 269, 21, 289, 21, 1, 1);
     obdRectangle(&obd, 267, 9, 267, 20, 1, 1);
+    obdRectangle(&obd, 268, 9, 268, 20, 1, 1);
     obdRectangle(&obd, 291, 9, 291, 20, 1, 1);
+    obdRectangle(&obd, 290, 9, 290, 20, 1, 1);
     obdSetPixel(&obd, 268, 8, 1, 0);
     obdSetPixel(&obd, 290, 8, 1, 0);
     obdSetPixel(&obd, 268, 21, 1, 0);
