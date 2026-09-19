@@ -352,8 +352,10 @@ void update_time_scene(struct date_time _time, uint16_t battery_mv, int16_t temp
     else if (_time.tm_min != minute_refresh)
     {
         minute_refresh = _time.tm_min;
-        // ponytail: this panel's partial waveform corrupts changing seven-segment digits.
-        scene(_time, battery_mv, temperature, 1);
+        // ponytail: use a complete refresh every five minutes until a panel-validated
+        // partial waveform is available; this keeps changing digits intact.
+        if ((_time.tm_min % 5) == 0)
+            scene(_time, battery_mv, temperature, 1);
     }
 }
 
